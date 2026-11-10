@@ -1,0 +1,79 @@
+# base-territorial-api — ThermoCity
+
+API da feature **Base Territorial de Presidente Prudente** (Épico 1). Guarda no Oracle os dados preparados no QGIS
+e responde às perguntas da camada **ONDE** do gêmeo digital.
+
+| PBI | O que a API entrega |
+|---|---|
+| #3 Setores + Censo 2022 | 420 setores com população total, 60–69 e 70+ (`/setores`) |
+| #4 IPVS 2022 (Seade) | grupo de vulnerabilidade 1–6 por setor; "Não classificado" vira `SEM_DADO` |
+| #5 UBS e refúgios | 36 UBS (CNES) e 155 possíveis refúgios (OpenStreetMap) com distância em metros |
+| #6 Cadastro sintético | pessoas 60+ **fictícias** distribuídas pelos setores na proporção do Censo |
+| #11 Mapa de calor | classe de calor 1–5 por setor (Landsat, 08/01/2024) no bloco `calor` e em `/setores/geojson` |
+
+## Como rodar
+
+Requisitos: **JDK 25** e acesso ao Oracle da FIAP. As credenciais ficam só em variáveis de ambiente:
+
+```powershell
+$env:DB_URL="jdbc:oracle:thin:@oracle.fiap.com.br:1521:ORCL"
+$env:DB_USERNAME="rmXXXXX"
+$env:DB_PASSWORD="sua_senha"
+.\gradlew.bat bootRun
+```
+
+Na primeira subida, com o banco vazio, a aplicação cria as tabelas (`ddl-auto=update`) e importa sozinha os CSVs de
+`src/main/resources/dados`. Para desligar: `CARGA_INICIAL=false`.
+
+Testes (usam H2 em memória, não precisam do Oracle): `.\gradlew.bat test`
+
+## Endpoints
+
+| Método | Caminho | Descrição |
+|---|---|---|
+| GET | `/setores` | todos os setores (sem geometria) |
+| GET | `/setores/{codigo}` | setor com Censo, IPVS e calor — 404 se não existir |
+| GET | `/setores/geojson` | polígonos dos setores (GeoJSON) com `classeCalor`, `ipvsGrupo` e `pop60mais`, para o mapa do painel |
+| GET | `/setores/{codigo}/servicos?raioMetros=1500` | UBS e refúgio mais próximos + serviços no raio |
+| GET | `/refugios/proximo?lat=&lon=&incluirPotenciais=false` | refúgio mais próximo de um ponto — 400 fora do município |
+| POST | `/admin/importacoes/setores` · `/ipvs` · `/servicos` · `/calor` | importa CSV (campo `arquivo`) — 422 se houver linha inválida, e nada é gravado |
+| POST | `/admin/importacoes/padrao` | reimporta os quatro CSVs que acompanham o projeto |
+| POST | `/admin/sinteticos` `{ "quantidade": 5000, "semente": 42 }` | gera o cadastro fictício (substitui o anterior) |
+| GET | `/pessoas?setor=` · `/pessoas/{id}` | consulta as pessoas fictícias |
+
+Exemplos prontos em [`docs/requests.http`](docs/requests.http). Erros sempre no formato
+`{ status, erro, mensagem, detalhes[], timestamp }`.
+
+## Regras importantes
+
+- **Refúgio "confirmado"** = revisão `manter` (equipamento público). Com `incluirPotenciais=true` entram também os
+  `potencial` (templos, shoppings). `revisar` e `remover` nunca são sugeridos.
+- **Distâncias** em linha reta (haversine). Distância a pé real fica para uma próxima versão.
+- **Setores suprimidos pelo IBGE** (21) e **sem registro** (9) ficam sem população e não recebem pessoas sintéticas.
+- **Cadastro sintético:** todos os registros têm `sintetico=true`, telefones `+55 18 0000-XXXX` (não discáveis) e
+  consentimento LGPD simulado. As taxas de "mora sozinho", "mobilidade reduzida" e "condição crônica" em
+  `application.properties` são **PROVISÓRIAS** — trocar por fonte oficial antes de apresentar números.
+  O Censo por setor não tem faixa 80+, então a idade dentro de 70+ é sorteada com peso decrescente (70–95).
+
+- **Calor por setor (tabela `CALOR_SETOR`):** a `classe` (1 = 20% mais frescos, 5 = 20% mais quentes) é o dado a usar.
+  `temperaturaSuperficieC` é a temperatura do **chão e dos telhados** às 10h20 de 08/01/2024, não do ar; os níveis
+  NC1–NC5 continuam vindo da estação do INMET. `temperaturaArEstimadaC` vem do modelo da Unesp e ficou ~9 °C acima
+  das medições de campo, então serve só para comparar setores. `percentualConstrucoes` e `percentualVegetacaoDensa`
+  são médias de janelas de 990 m (variáveis C1 e C3 do modelo), não a área exata dentro do setor.
+  Setor sem pixel válido (nuvem) fica com status `SEM_DADO`; nesta cena não houve nenhum.
+- Se o banco já tiver setores mas a tabela de calor estiver vazia, a aplicação importa só o `calor.csv` ao subir.
+
+## Fontes dos dados
+
+- IBGE — Censo Demográfico 2022, malha de setores e agregados por setor (município 3541406)
+- Fundação Seade — IPVS 2022
+- Ministério da Saúde — API de dados abertos do CNES (UBS)
+- OpenStreetMap (Overpass API) — possíveis refúgios, revisados manualmente
+- USGS/NASA — Landsat 8 Collection 2 Level-2, cena LC08_L2SP_222075_20240108_20240122_02_T1 (temperatura de superfície)
+- Amorim, Dubreuil e Cardoso (2015), Revista Brasileira de Climatologia v.16 — modelo de temperatura do ar da Unesp
+
+## Atualizar os dados
+
+Os CSVs em `src/main/resources/dados` saem do GeoPackage `prudente_setores_final.gpkg` (QGIS). Separador `;`,
+UTF-8, geometria em WKT (EPSG:4674). Ordem de importação: setores → ipvs → servicos → calor.
+O `calor.csv` sai de `landsat/setores_calor.gpkg` (feature Mapa de Calor por Setor).

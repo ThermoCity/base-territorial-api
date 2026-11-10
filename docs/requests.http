@@ -1,0 +1,95 @@
+### ThermoCity - Base Territorial de Presidente Prudente
+### Abra no IntelliJ (HTTP Client) ou VS Code (extensão REST Client).
+@base = http://localhost:8080
+
+### Lista os 420 setores (sem geometria)
+GET {{base}}/setores
+
+### Um setor: população do Censo 2022 + IPVS
+GET {{base}}/setores/354140605000002
+
+### Setor que não existe -> 404
+GET {{base}}/setores/999999999999999
+
+### UBS mais próxima, refúgio mais próximo e serviços num raio de 1,5 km
+GET {{base}}/setores/354140605000002/servicos?raioMetros=1500
+
+### Refúgio mais próximo de uma coordenada (só públicos confirmados)
+GET {{base}}/refugios/proximo?lat=-22.125&lon=-51.389
+
+### Incluindo refúgios "potenciais" (ex.: templos, shoppings)
+GET {{base}}/refugios/proximo?lat=-22.125&lon=-51.389&incluirPotenciais=true
+
+### Coordenada fora de Presidente Prudente -> 400
+GET {{base}}/refugios/proximo?lat=-23.5503&lon=-46.6339
+
+### Importar setores (CSV ; UTF-8)
+POST {{base}}/admin/importacoes/setores
+Content-Type: multipart/form-data; boundary=fronteira
+
+--fronteira
+Content-Disposition: form-data; name="arquivo"; filename="setores.csv"
+Content-Type: text/csv
+
+< ../src/main/resources/dados/setores.csv
+--fronteira--
+
+### Importar IPVS
+POST {{base}}/admin/importacoes/ipvs
+Content-Type: multipart/form-data; boundary=fronteira
+
+--fronteira
+Content-Disposition: form-data; name="arquivo"; filename="ipvs.csv"
+Content-Type: text/csv
+
+< ../src/main/resources/dados/ipvs.csv
+--fronteira--
+
+### Importar UBS e refúgios
+POST {{base}}/admin/importacoes/servicos
+Content-Type: multipart/form-data; boundary=fronteira
+
+--fronteira
+Content-Disposition: form-data; name="arquivo"; filename="servicos.csv"
+Content-Type: text/csv
+
+< ../src/main/resources/dados/servicos.csv
+--fronteira--
+
+### Mapa de calor: polígonos com classe de calor (GeoJSON)
+GET {{base}}/setores/geojson
+
+### Setor mais quente da cidade (classe 5)
+GET {{base}}/setores/354140605000114
+
+### Importar calor por setor
+POST {{base}}/admin/importacoes/calor
+Content-Type: multipart/form-data; boundary=fronteira
+
+--fronteira
+Content-Disposition: form-data; name="arquivo"; filename="calor.csv"
+Content-Type: text/csv
+
+< ../src/main/resources/dados/calor.csv
+--fronteira--
+
+### Recarregar os quatro arquivos padrão de uma vez
+POST {{base}}/admin/importacoes/padrao
+
+### Gerar cadastro sintético (PBI #6) - substitui o anterior
+POST {{base}}/admin/sinteticos
+Content-Type: application/json
+
+{ "quantidade": 5000, "semente": 42 }
+
+### Quantidade inválida -> 400
+POST {{base}}/admin/sinteticos
+Content-Type: application/json
+
+{ "quantidade": 0 }
+
+### Pessoas fictícias de um setor
+GET {{base}}/pessoas?setor=354140605000002
+
+### Uma pessoa
+GET {{base}}/pessoas/1
