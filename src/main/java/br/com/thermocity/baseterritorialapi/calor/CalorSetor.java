@@ -19,7 +19,7 @@ import java.time.OffsetDateTime;
  * (feature "Mapa de Calor por Setor"). Uma linha por setor, ligada ao SETOR pelo código.
  */
 @Entity
-@Table(name = "CALOR_SETOR")
+@Table(name = "TMC_CALOR_SETOR")
 @Getter
 @Setter
 @NoArgsConstructor

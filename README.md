@@ -22,8 +22,15 @@ $env:DB_PASSWORD="sua_senha"
 .\gradlew.bat bootRun
 ```
 
-Na primeira subida, com o banco vazio, a aplicação cria as tabelas (`ddl-auto=update`) e importa sozinha os CSVs de
-`src/main/resources/dados`. Para desligar: `CARGA_INICIAL=false`.
+A API usa as tabelas oficiais `TMC_SETOR`, `TMC_SERVICO`, `TMC_CALOR_SETOR` e `TMC_PESSOA_SINTETICA` (sequência
+`TMC_SEQ_PESSOA_SINTETICA`). Quem cria e carrega essas tabelas é o repositório **thermocity-banco-de-dados**
+(`sql/01_criar_tabelas.sql` e `carga/carregar.py`); rode-o antes de subir a API.
+
+A API só **confere** o esquema (`ddl-auto=validate`): se faltar uma tabela ou coluna, ela não sobe e o log mostra
+qual (ex.: `Schema-validation: missing column [ndvi_medio] in table [tmc_calor_setor]`).
+
+A carga inicial por CSV fica desligada. Para um banco local vazio, dá para ligar com `DDL_AUTO=update` e
+`CARGA_INICIAL=true`, que cria as tabelas e importa os CSVs de `src/main/resources/dados`.
 
 Testes (usam H2 em memória, não precisam do Oracle): `.\gradlew.bat test`
 
@@ -55,7 +62,7 @@ Exemplos prontos em [`docs/requests.http`](docs/requests.http). Erros sempre no 
   `application.properties` são **PROVISÓRIAS** — trocar por fonte oficial antes de apresentar números.
   O Censo por setor não tem faixa 80+, então a idade dentro de 70+ é sorteada com peso decrescente (70–95).
 
-- **Calor por setor (tabela `CALOR_SETOR`):** a `classe` (1 = 20% mais frescos, 5 = 20% mais quentes) é o dado a usar.
+- **Calor por setor (tabela `TMC_CALOR_SETOR`):** a `classe` (1 = 20% mais frescos, 5 = 20% mais quentes) é o dado a usar.
   `temperaturaSuperficieC` é a temperatura do **chão e dos telhados** às 10h20 de 08/01/2024, não do ar; os níveis
   NC1–NC5 continuam vindo da estação do INMET. `temperaturaArEstimadaC` vem do modelo da Unesp e ficou ~9 °C acima
   das medições de campo, então serve só para comparar setores. `percentualConstrucoes` e `percentualVegetacaoDensa`

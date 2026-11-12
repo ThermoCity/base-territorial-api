@@ -12,7 +12,7 @@ import lombok.Setter;
 
 /** UBS (CNES) ou possível refúgio climático (OpenStreetMap). PBI #5. */
 @Entity
-@Table(name = "SERVICO")
+@Table(name = "TMC_SERVICO")
 @Getter
 @Setter
 @NoArgsConstructor

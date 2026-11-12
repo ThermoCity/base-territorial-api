@@ -33,7 +33,7 @@ public class CargaInicial implements ApplicationRunner {
     private final boolean habilitada;
 
     public CargaInicial(ImportacaoService importacao, SetorRepository setores, CalorSetorRepository calor,
-                        GeoService geo, @Value("${thermocity.carga-inicial.habilitada:true}") boolean habilitada) {
+                        GeoService geo, @Value("${thermocity.carga-inicial.habilitada:false}") boolean habilitada) {
         this.importacao = importacao;
         this.setores = setores;
         this.calor = calor;

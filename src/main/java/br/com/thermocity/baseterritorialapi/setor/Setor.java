@@ -15,7 +15,7 @@ import java.time.OffsetDateTime;
 
 /** Setor censitário do IBGE (Censo 2022) com população por idade e IPVS. */
 @Entity
-@Table(name = "SETOR")
+@Table(name = "TMC_SETOR")
 @Getter
 @Setter
 @NoArgsConstructor

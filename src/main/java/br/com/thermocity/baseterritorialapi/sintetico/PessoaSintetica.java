@@ -19,7 +19,7 @@ import java.time.OffsetDateTime;
  * Serve para testar a busca ativa sem tocar em dados pessoais (LGPD).
  */
 @Entity
-@Table(name = "PESSOA_SINTETICA", indexes = @Index(name = "IX_PESSOA_SINT_SETOR", columnList = "setor_codigo"))
+@Table(name = "TMC_PESSOA_SINTETICA", indexes = @Index(name = "IX_TMC_PESSOA_SETOR", columnList = "setor_codigo"))
 @Getter
 @Setter
 @NoArgsConstructor
@@ -27,7 +27,7 @@ public class PessoaSintetica {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_pessoa_sintetica")
-    @SequenceGenerator(name = "seq_pessoa_sintetica", sequenceName = "SEQ_PESSOA_SINTETICA", allocationSize = 50)
+    @SequenceGenerator(name = "seq_pessoa_sintetica", sequenceName = "TMC_SEQ_PESSOA_SINTETICA", allocationSize = 50)
     private Long id;
 
     @Column(length = 120, nullable = false)
