@@ -1,5 +1,7 @@
 package br.com.thermocity.baseterritorialapi.setor;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import br.com.thermocity.baseterritorialapi.calor.CalorSetor;
 import br.com.thermocity.baseterritorialapi.calor.CalorSetorRepository;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +19,8 @@ import java.util.stream.Collectors;
 @RequestMapping("/setores")
 public class SetorController {
 
+    private static final Logger log = LoggerFactory.getLogger(SetorController.class);
+
     private final SetorService servico;
     private final CalorSetorRepository calor;
 
@@ -29,12 +33,18 @@ public class SetorController {
     public List<SetorResponse> listar() {
         Map<String, CalorSetor> porSetor = calor.findAll().stream()
                 .collect(Collectors.toMap(CalorSetor::getCodigoSetor, Function.identity()));
-        return servico.listar().stream().map(s -> SetorResponse.de(s, porSetor.get(s.getCodigo()))).toList();
+        List<SetorResponse> setores = servico.listar().stream()
+                .map(s -> SetorResponse.de(s, porSetor.get(s.getCodigo()))).toList();
+        log.info("Listagem de setores: {} setores, {} com dado de calor", setores.size(), porSetor.size());
+        return setores;
     }
 
     @GetMapping("/{codigo}")
     public SetorResponse buscar(@PathVariable String codigo) {
+        log.info("Buscando setor {}", codigo);
         Setor s = servico.buscar(codigo);
-        return SetorResponse.de(s, calor.findById(codigo).orElse(null));
+        CalorSetor c = calor.findById(codigo).orElse(null);
+        log.info("Setor {} encontrado (classe de calor: {})", codigo, c == null ? "sem dado" : c.getClasseCalor());
+        return SetorResponse.de(s, c);
     }
 }

@@ -1,5 +1,7 @@
 package br.com.thermocity.baseterritorialapi.calor;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import br.com.thermocity.baseterritorialapi.geo.GeoService;
 import br.com.thermocity.baseterritorialapi.setor.Setor;
 import br.com.thermocity.baseterritorialapi.setor.SetorService;
@@ -23,6 +25,8 @@ import java.util.Map;
 @RestController
 public class GeoJsonController {
 
+    private static final Logger log = LoggerFactory.getLogger(GeoJsonController.class);
+
     private final SetorService setores;
     private final CalorSetorRepository calor;
     private final GeoService geo;
@@ -39,12 +43,18 @@ public class GeoJsonController {
         calor.findAll().forEach(c -> porSetor.put(c.getCodigoSetor(), c));
 
         List<Map<String, Object>> features = new ArrayList<>();
+        int semGeometria = 0;
         for (Setor s : setores.listar()) {
-            if (s.getGeometriaWkt() == null) continue;
+            if (s.getGeometriaWkt() == null) {
+                semGeometria++;
+                continue;
+            }
             Geometry g;
             try {
                 g = geo.lerWkt(s.getGeometriaWkt());
             } catch (ParseException e) {
+                log.warn("Setor {} com WKT inválido, ficou fora do GeoJSON: {}", s.getCodigo(), e.getMessage());
+                semGeometria++;
                 continue;
             }
             CalorSetor c = porSetor.get(s.getCodigo());
@@ -63,6 +73,8 @@ public class GeoJsonController {
             feature.put("properties", props);
             features.add(feature);
         }
+        log.info("GeoJSON dos setores: {} features ({} setores sem geometria válida, {} com calor)",
+                features.size(), semGeometria, porSetor.size());
         Map<String, Object> colecao = new LinkedHashMap<>();
         colecao.put("type", "FeatureCollection");
         colecao.put("features", features);
