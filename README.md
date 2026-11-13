@@ -1,6 +1,6 @@
 # base-territorial-api — ThermoCity
 
-API da feature **Base Territorial de Presidente Prudente** (Épico 1). Guarda no Oracle os dados preparados no QGIS
+API da feature **Base Territorial de Presidente Prudente** (Épico 1). Guarda no PostgreSQL os dados preparados no QGIS
 e responde às perguntas da camada **ONDE** do gêmeo digital.
 
 | PBI | O que a API entrega |
@@ -13,10 +13,10 @@ e responde às perguntas da camada **ONDE** do gêmeo digital.
 
 ## Como rodar
 
-Requisitos: **JDK 25** e acesso ao Oracle da FIAP. As credenciais ficam só em variáveis de ambiente:
+Requisitos: **JDK 25** e acesso ao PostgreSQL. As credenciais ficam só em variáveis de ambiente:
 
 ```powershell
-$env:DB_URL="jdbc:oracle:thin:@oracle.fiap.com.br:1521:ORCL"
+$env:DB_URL="jdbc:postgresql://localhost:5432/base_territorial"
 $env:DB_USERNAME="rmXXXXX"
 $env:DB_PASSWORD="sua_senha"
 .\gradlew.bat bootRun
@@ -32,7 +32,7 @@ qual (ex.: `Schema-validation: missing column [ndvi_medio] in table [tmc_calor_s
 A carga inicial por CSV fica desligada. Para um banco local vazio, dá para ligar com `DDL_AUTO=update` e
 `CARGA_INICIAL=true`, que cria as tabelas e importa os CSVs de `src/main/resources/dados`.
 
-Testes (usam H2 em memória, não precisam do Oracle): `.\gradlew.bat test`
+Testes (usam H2 em memória, não precisam do PostgreSQL): `.\gradlew.bat test`
 
 ## Endpoints
 
