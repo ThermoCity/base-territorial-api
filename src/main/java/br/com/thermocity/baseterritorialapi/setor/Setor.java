@@ -5,7 +5,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
-import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -69,8 +68,8 @@ public class Setor {
     private Double latReferencia;
     private Double lonReferencia;
 
-    @Lob
-    @Column(name = "geometria_wkt")
+    // TEXT no PostgreSQL. Sem @Lob: no PostgreSQL o Hibernate mapeia @Lob String para oid (large object).
+    @Column(name = "geometria_wkt", columnDefinition = "text")
     private String geometriaWkt;
 
     private OffsetDateTime atualizadoEm;
