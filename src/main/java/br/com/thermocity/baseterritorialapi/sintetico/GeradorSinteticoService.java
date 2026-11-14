@@ -2,7 +2,7 @@ package br.com.thermocity.baseterritorialapi.sintetico;
 
 import br.com.thermocity.baseterritorialapi.common.RequisicaoInvalidaException;
 import br.com.thermocity.baseterritorialapi.geo.GeoService;
-import br.com.thermocity.baseterritorialapi.servico.ServicoResponse;
+import br.com.thermocity.baseterritorialapi.servico.Servico;
 import br.com.thermocity.baseterritorialapi.servico.ServicoService;
 import br.com.thermocity.baseterritorialapi.setor.Setor;
 import br.com.thermocity.baseterritorialapi.setor.SetorRepository;
@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Random;
 import java.util.TreeMap;
 import java.util.function.Function;
@@ -75,6 +74,10 @@ public class GeradorSinteticoService {
             throw new RequisicaoInvalidaException("Não há setores com população 60+ carregada. Importe os setores primeiro.");
         }
 
+        // As UBS são lidas uma vez só; a mais próxima de cada pessoa é calculada em memória.
+        // (Antes era uma consulta ao banco por pessoa: com milhares de pessoas, o pedido estourava o tempo limite.)
+        List<Servico> ubs = servicos.listarUbs().stream().filter(Servico::temCoordenada).toList();
+
         int[] porSetor = maioresRestos(quantidade, base.stream().mapToDouble(Setor::getPop60mais).toArray());
         OffsetDateTime agora = OffsetDateTime.now();
         List<PessoaSintetica> geradas = new ArrayList<>(quantidade);
@@ -88,7 +91,7 @@ public class GeradorSinteticoService {
             int[] faixas = maioresRestos(n, new double[]{p6069, p70});
             for (int k = 0; k < n; k++) {
                 boolean setentaMais = k >= faixas[0];
-                geradas.add(novaPessoa(s, setentaMais, aleatorio, semente, agora));
+                geradas.add(novaPessoa(s, setentaMais, aleatorio, semente, agora, ubs));
             }
         }
 
@@ -106,7 +109,8 @@ public class GeradorSinteticoService {
                 AVISO);
     }
 
-    private PessoaSintetica novaPessoa(Setor s, boolean setentaMais, Random r, long semente, OffsetDateTime agora) {
+    private PessoaSintetica novaPessoa(Setor s, boolean setentaMais, Random r, long semente, OffsetDateTime agora,
+                                       List<Servico> ubs) {
         PessoaSintetica p = new PessoaSintetica();
         boolean feminino = r.nextDouble() < props.probabilidadeFeminino();
         p.setSexo(feminino ? "F" : "M");
@@ -130,11 +134,12 @@ public class GeradorSinteticoService {
             p.setContatoReferenciaTelefone(telefoneFicticio(r));
         }
 
-        Optional<ServicoResponse> ubs = servicos.ubsMaisProxima(p.getLat(), p.getLon());
-        ubs.ifPresent(u -> {
-            p.setUbsReferenciaId(u.id());
-            p.setUbsReferenciaNome(u.nome());
-        });
+        ubs.stream()
+                .min(Comparator.comparingDouble(u -> GeoService.distanciaMetros(p.getLat(), p.getLon(), u.getLat(), u.getLon())))
+                .ifPresent(u -> {
+                    p.setUbsReferenciaId(u.getId());
+                    p.setUbsReferenciaNome(u.getNome());
+                });
 
         p.setConsentimentoLgpd(true);
         p.setConsentimentoEm(agora);
