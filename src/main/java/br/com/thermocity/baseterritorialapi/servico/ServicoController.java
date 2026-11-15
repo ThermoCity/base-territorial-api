@@ -21,10 +21,12 @@ public class ServicoController {
 
     /** Todas as UBS e os refúgios sugeríveis, para desenhar no mapa do painel. */
     @GetMapping("/servicos")
-    public java.util.List<ServicoResponse> todos() {
+    public org.springframework.http.ResponseEntity<java.util.List<ServicoResponse>> todos() {
         java.util.List<ServicoResponse> r = servico.listarParaMapa();
         log.info("Serviços para o mapa: {}", r.size());
-        return r;
+        return org.springframework.http.ResponseEntity.ok()
+                .cacheControl(org.springframework.http.CacheControl.maxAge(1, java.util.concurrent.TimeUnit.HOURS).cachePublic())
+                .body(r);
     }
 
     /** UBS e refúgios que atendem o setor, com distância em metros. */

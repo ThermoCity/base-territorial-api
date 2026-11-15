@@ -12,6 +12,7 @@ import org.springframework.web.context.WebApplicationContext;
 
 import java.nio.charset.StandardCharsets;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
@@ -243,7 +244,15 @@ class BaseTerritorialIntegrationTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.features[0].properties.situacao").exists())
                 .andExpect(jsonPath("$.features[0].properties.distrito").exists())
-                .andExpect(jsonPath("$.features[0].properties.pop70mais").exists());
+                .andExpect(jsonPath("$.features[0].properties.pop70mais").exists())
+                .andExpect(header().string("Cache-Control", containsString("max-age=3600")));
+    }
+
+    @Test
+    void geojsonFuncionaQuandoONavegadorPedeJsonComum() throws Exception {
+        mvc.perform(get("/setores/geojson").header("Accept", "application/json"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.type").value("FeatureCollection"));
     }
 
     @Test

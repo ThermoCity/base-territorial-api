@@ -1,5 +1,7 @@
 package br.com.thermocity.baseterritorialapi.importacao;
 
+import br.com.thermocity.baseterritorialapi.calor.GeoJsonController;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.function.Function;
@@ -29,10 +31,12 @@ public class ImportacaoController {
 
     private final ImportacaoService importacao;
     private final CargaInicial cargaInicial;
+    private final GeoJsonController geoJson;
 
-    public ImportacaoController(ImportacaoService importacao, CargaInicial cargaInicial) {
+    public ImportacaoController(ImportacaoService importacao, CargaInicial cargaInicial, GeoJsonController geoJson) {
         this.importacao = importacao;
         this.cargaInicial = cargaInicial;
+        this.geoJson = geoJson;
     }
 
     @PostMapping(value = "/setores", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -65,6 +69,7 @@ public class ImportacaoController {
     public List<ImportacaoResultado> padrao() {
         log.info("Importação dos arquivos padrão (src/main/resources/dados) iniciada");
         List<ImportacaoResultado> resultados = cargaInicial.importarArquivosPadrao();
+        geoJson.limparCache();
         resultados.forEach(r -> log.info("Importação padrão de {}: {} registros {}", r.tipo(), r.registros(), r.resumo()));
         return resultados;
     }
@@ -74,6 +79,7 @@ public class ImportacaoController {
         log.info("Importação de {} recebida: arquivo={} ({} bytes)", tipo,
                 arquivo == null ? null : arquivo.getOriginalFilename(), arquivo == null ? 0 : arquivo.getSize());
         ImportacaoResultado r = acao.apply(abrir(arquivo));
+        geoJson.limparCache(); // o mapa passa a refletir os dados novos
         log.info("Importação de {} concluída: {} registros {}", tipo, r.registros(), r.resumo());
         return r;
     }

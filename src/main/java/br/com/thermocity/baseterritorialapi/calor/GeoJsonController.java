@@ -10,6 +10,10 @@ import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LinearRing;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.io.ParseException;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
+import org.springframework.http.CacheControl;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -17,6 +21,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Polígonos dos setores em GeoJSON, com população 60+, IPVS e classe de calor como propriedades,
@@ -31,14 +36,50 @@ public class GeoJsonController {
     private final CalorSetorRepository calor;
     private final GeoService geo;
 
+    // O GeoJSON (~600 KB) só muda quando setores ou calor são reimportados: é montado uma vez e reaproveitado.
+    private volatile Map<String, Object> cache;
+
     public GeoJsonController(SetorService setores, CalorSetorRepository calor, GeoService geo) {
         this.setores = setores;
         this.calor = calor;
         this.geo = geo;
     }
 
-    @GetMapping(value = "/setores/geojson", produces = "application/geo+json")
-    public Map<String, Object> geojson() {
+    // Aceita application/json também: o navegador (fetch) costuma pedir JSON comum, e sem isso
+    // o pedido caía em GET /setores/{codigo} com codigo = "geojson" (404 "Setor não encontrado").
+    @GetMapping(value = "/setores/geojson", produces = {"application/geo+json", "application/json"})
+    public ResponseEntity<Map<String, Object>> geojson() {
+        Map<String, Object> pronto = cache;
+        if (pronto == null) {
+            synchronized (this) {
+                if (cache == null) cache = montar();
+                pronto = cache;
+            }
+        }
+        // O navegador pode reaproveitar a resposta por 1 hora sem chamar a API de novo
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.maxAge(1, TimeUnit.HOURS).cachePublic())
+                .body(pronto);
+    }
+
+    /** Monta o GeoJSON assim que a aplicação sobe, para a primeira chamada do painel já ser rápida. */
+    @EventListener(ApplicationReadyEvent.class)
+    public void aquecer() {
+        try {
+            long inicio = System.currentTimeMillis();
+            cache = montar();
+            log.info("GeoJSON dos setores montado em {} ms", System.currentTimeMillis() - inicio);
+        } catch (RuntimeException e) {
+            log.warn("Não foi possível montar o GeoJSON na subida: {}", e.getMessage());
+        }
+    }
+
+    /** Descarta o GeoJSON montado; chamado depois de cada importação. */
+    public void limparCache() {
+        cache = null;
+    }
+
+    private Map<String, Object> montar() {
         Map<String, CalorSetor> porSetor = new LinkedHashMap<>();
         calor.findAll().forEach(c -> porSetor.put(c.getCodigoSetor(), c));
 
