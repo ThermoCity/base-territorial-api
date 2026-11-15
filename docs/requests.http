@@ -96,3 +96,24 @@ GET {{base}}/pessoas/1
 
 ### UBS e refúgios para o mapa do painel
 GET {{base}}/servicos
+
+### Gêmeo digital: nível de calor de cada dia de um cenário (limiares do banco)
+POST {{base}}/simulacoes/niveis
+Content-Type: application/json
+
+{
+  "icMaxPorDia": [34.6, 35.4, 36.2, 37.3, 37.6, 37.1, 35.8, 33.9],
+  "dataInicio": "2026-12-01"
+}
+
+### Cenário que começa no meio de uma onda de calor (2 dias anteriores já acima de 37 °C)
+POST {{base}}/simulacoes/niveis
+Content-Type: application/json
+
+{ "icMaxPorDia": [37.1, 36.0], "icMaxDiasAnteriores": [37.4, 37.0] }
+
+### Cenário vazio -> 400
+POST {{base}}/simulacoes/niveis
+Content-Type: application/json
+
+{ "icMaxPorDia": [] }
