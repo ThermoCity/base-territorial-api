@@ -60,8 +60,11 @@ public class GeoJsonController {
             CalorSetor c = porSetor.get(s.getCodigo());
             Map<String, Object> props = new LinkedHashMap<>();
             props.put("codigo", s.getCodigo());
+            props.put("situacao", s.getSituacao());
+            props.put("distrito", s.getNmDistrito());
             props.put("bairro", s.getNmBairro());
             props.put("pop60mais", s.getPop60mais());
+            props.put("pop70mais", s.getPop70mais());
             props.put("ipvsGrupo", s.getIpvsGrupo());
             props.put("classeCalor", c == null ? null : c.getClasseCalor());
             props.put("lstVeraoC", c == null ? null : c.getLstVeraoC());

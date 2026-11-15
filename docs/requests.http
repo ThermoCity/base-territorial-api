@@ -93,3 +93,6 @@ GET {{base}}/pessoas?setor=354140605000002
 
 ### Uma pessoa
 GET {{base}}/pessoas/1
+
+### UBS e refúgios para o mapa do painel
+GET {{base}}/servicos

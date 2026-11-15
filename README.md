@@ -40,7 +40,8 @@ Testes (usam H2 em memória, não precisam do PostgreSQL): `.\gradlew.bat test`
 |---|---|---|
 | GET | `/setores` | todos os setores (sem geometria) |
 | GET | `/setores/{codigo}` | setor com Censo, IPVS e calor — 404 se não existir |
-| GET | `/setores/geojson` | polígonos dos setores (GeoJSON) com `classeCalor`, `ipvsGrupo` e `pop60mais`, para o mapa do painel |
+| GET | `/setores/geojson` | polígonos dos setores (GeoJSON) com `situacao`, `distrito`, `bairro`, `pop60mais`, `pop70mais`, `ipvsGrupo`, `classeCalor` e `lstVeraoC`, para o mapa do painel |
+| GET | `/servicos` | todas as UBS e os refúgios sugeríveis (`manter` e `potencial`) com coordenada, para o mapa do painel |
 | GET | `/setores/{codigo}/servicos?raioMetros=1500` | UBS e refúgio mais próximos + serviços no raio |
 | GET | `/refugios/proximo?lat=&lon=&incluirPotenciais=false` | refúgio mais próximo de um ponto — 400 fora do município |
 | POST | `/admin/importacoes/setores` · `/ipvs` · `/servicos` · `/calor` | importa CSV (campo `arquivo`) — 422 se houver linha inválida, e nada é gravado |
@@ -84,3 +85,9 @@ Exemplos prontos em [`docs/requests.http`](docs/requests.http). Erros sempre no 
 Os CSVs em `src/main/resources/dados` saem do GeoPackage `prudente_setores_final.gpkg` (QGIS). Separador `;`,
 UTF-8, geometria em WKT (EPSG:4674). Ordem de importação: setores → ipvs → servicos → calor.
 O `calor.csv` sai de `landsat/setores_calor.gpkg` (feature Mapa de Calor por Setor).
+
+## CORS (chamadas do painel pelo navegador)
+
+O painel do gêmeo digital roda em outro domínio, então a API só aceita chamadas do navegador vindas das origens
+em `CORS_ORIGENS` (separadas por vírgula). Padrão: `http://localhost:5173` (o `npm run dev` do painel).
+No Azure, configure `CORS_ORIGENS` nas variáveis de ambiente do App Service com a URL onde o painel for publicado.

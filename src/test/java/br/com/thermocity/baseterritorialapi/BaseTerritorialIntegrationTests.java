@@ -17,9 +17,11 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -233,6 +235,34 @@ class BaseTerritorialIntegrationTests {
                 .andExpect(jsonPath("$.features", hasSize(420)))
                 .andExpect(jsonPath("$.features[0].geometry.type").isString())
                 .andExpect(jsonPath("$.features[?(@.id == '" + SETOR_MAIS_QUENTE + "')].properties.classeCalor").value(5));
+    }
+
+    @Test
+    void geojsonTrazOsCamposUsadosPeloPainel() throws Exception {
+        mvc.perform(get("/setores/geojson"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.features[0].properties.situacao").exists())
+                .andExpect(jsonPath("$.features[0].properties.distrito").exists())
+                .andExpect(jsonPath("$.features[0].properties.pop70mais").exists());
+    }
+
+    @Test
+    void servicosTrazUbsERefugiosSugeriveisParaOMapa() throws Exception {
+        mvc.perform(get("/servicos"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(greaterThan(0))))
+                .andExpect(jsonPath("$[?(@.tipo == 'UBS')]").isNotEmpty())
+                .andExpect(jsonPath("$[?(@.tipo == 'REFUGIO' && @.revisao == 'remover')]").isEmpty())
+                .andExpect(jsonPath("$[?(@.tipo == 'REFUGIO' && @.revisao == 'revisar')]").isEmpty());
+    }
+
+    @Test
+    void corsLiberaOPainelLocal() throws Exception {
+        mvc.perform(options("/servicos")
+                        .header("Origin", "http://localhost:5173")
+                        .header("Access-Control-Request-Method", "GET"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Access-Control-Allow-Origin", "http://localhost:5173"));
     }
 
     private static MockMultipartFile arquivo(String conteudo) {

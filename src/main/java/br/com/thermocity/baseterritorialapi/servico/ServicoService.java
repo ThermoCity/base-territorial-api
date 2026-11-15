@@ -72,6 +72,16 @@ public class ServicoService {
         return maisProximo(repositorio.findByTipoAndCoordStatus(TipoServico.UBS, StatusCoordenada.OK), lat, lon);
     }
 
+    /** GET /servicos: todas as UBS e os refúgios sugeríveis (manter e potencial) com coordenada, para o mapa. */
+    @Transactional(readOnly = true)
+    public List<ServicoResponse> listarParaMapa() {
+        return java.util.stream.Stream.concat(listarUbs().stream(), refugios(REFUGIO_COM_POTENCIAIS).stream())
+                .filter(Servico::temCoordenada)
+                .sorted(Comparator.comparing(Servico::getId))
+                .map(s -> ServicoResponse.de(s, null))
+                .toList();
+    }
+
     @Transactional(readOnly = true)
     public List<Servico> listarUbs() {
         return repositorio.findByTipoAndCoordStatus(TipoServico.UBS, StatusCoordenada.OK);

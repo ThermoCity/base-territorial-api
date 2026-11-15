@@ -19,6 +19,14 @@ public class ServicoController {
         this.servico = servico;
     }
 
+    /** Todas as UBS e os refúgios sugeríveis, para desenhar no mapa do painel. */
+    @GetMapping("/servicos")
+    public java.util.List<ServicoResponse> todos() {
+        java.util.List<ServicoResponse> r = servico.listarParaMapa();
+        log.info("Serviços para o mapa: {}", r.size());
+        return r;
+    }
+
     /** UBS e refúgios que atendem o setor, com distância em metros. */
     @GetMapping("/setores/{codigo}/servicos")
     public ServicosDoSetorResponse doSetor(@PathVariable String codigo,
