@@ -35,12 +35,19 @@ public class NivelCalorCalculadora {
 
     @Transactional(readOnly = true)
     public Resultado classificar(List<Double> icMaxPorDia, List<Double> icMaxDiasAnteriores) {
+        List<LimiarNivelCalor> regras = regrasAtivas();
+        return new Resultado(regras.get(0).getVersaoLimiar(), classificar(regras, icMaxPorDia, icMaxDiasAnteriores));
+    }
+
+    /** Regras da versão ativa; 400 se a tabela de limiares estiver vazia. */
+    @Transactional(readOnly = true)
+    public List<LimiarNivelCalor> regrasAtivas() {
         List<LimiarNivelCalor> regras = limiares.findByAtivoOrderByNivelAscDuracaoDiasAsc(ATIVO);
         if (regras.isEmpty()) {
             throw new RequisicaoInvalidaException(
                     "Os limiares de nível de calor não estão carregados (TMC_LIMIAR_NIVEL_CALOR)");
         }
-        return new Resultado(regras.get(0).getVersaoLimiar(), classificar(regras, icMaxPorDia, icMaxDiasAnteriores));
+        return regras;
     }
 
     /** Cálculo puro, sem banco: usado pelo serviço e pelos testes. */

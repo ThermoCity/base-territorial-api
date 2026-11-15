@@ -117,3 +117,12 @@ POST {{base}}/simulacoes/niveis
 Content-Type: application/json
 
 { "icMaxPorDia": [] }
+
+### Gêmeo digital: modelos prontos de onda de calor (episódios NC4/NC5 reais da A707 + variações +1 e +3 °C)
+GET {{base}}/simulacoes/modelos
+
+### Só episódios de 5 dias ou mais, com variação de +2 °C
+GET {{base}}/simulacoes/modelos?acrescimos=2&duracaoMinima=5
+
+### Acréscimo fora da faixa -> 400
+GET {{base}}/simulacoes/modelos?acrescimos=9

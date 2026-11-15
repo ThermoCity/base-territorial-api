@@ -49,6 +49,7 @@ Testes (usam H2 em memória, não precisam do PostgreSQL): `.\gradlew.bat test`
 | POST | `/admin/sinteticos` `{ "quantidade": 5000, "semente": 42 }` | gera o cadastro fictício (substitui o anterior) |
 | GET | `/pessoas?setor=` · `/pessoas/{id}` | consulta as pessoas fictícias |
 | POST | `/simulacoes/niveis` `{ "icMaxPorDia": [35.4, 35.8, 35.2], "icMaxDiasAnteriores": [], "dataInicio": "2026-12-01" }` | gêmeo digital: nível de calor (NC1–NC5) de cada dia do cenário pelos limiares ativos de `TMC_LIMIAR_NIVEL_CALOR` — mesmas regras do modo real (1 dia acima do limiar ou 3 dias seguidos); 400 se não houver limiares ativos |
+| GET | `/simulacoes/modelos?acrescimos=1,3&duracaoMinima=3` | gêmeo digital: ondas de calor reais da A707 (episódios de dias seguidos em NC4/NC5 em `TMC_RESUMO_DIARIO_CLIMA`, com 2 dias de entrada e 2 de saída, até 15 dias) e as mesmas ondas com acréscimo no IC; dias acima do máximo histórico vêm com `extrapolacao: true`. Cache de 1 h |
 
 Exemplos prontos em [`docs/requests.http`](docs/requests.http). Erros sempre no formato
 `{ status, erro, mensagem, detalhes[], timestamp }`.
