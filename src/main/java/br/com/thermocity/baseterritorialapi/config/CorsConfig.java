@@ -14,7 +14,7 @@ public class CorsConfig implements WebMvcConfigurer {
 
     private final String[] origens;
 
-    public CorsConfig(@Value("${thermocity.cors.origens}") String[] origens) {
+    public CorsConfig(@Value("${thermocity.cors.origens:http://localhost:5173}") String[] origens) {
         // tira espaços em volta de cada origem ("a, b" vira "a" e "b"); com espaço a origem não bate e o navegador bloqueia
         this.origens = java.util.Arrays.stream(origens).map(String::trim).filter(o -> !o.isEmpty()).toArray(String[]::new);
     }
@@ -25,6 +25,7 @@ public class CorsConfig implements WebMvcConfigurer {
                 .allowedOrigins(origens)
                 .allowedMethods("GET", "POST", "OPTIONS")
                 .allowedHeaders("*")
+                .exposedHeaders("Location")
                 .maxAge(3600);
     }
 }

@@ -55,6 +55,12 @@ public class ModeloOndaCalorService {
         return montar(regras, serie, acrescimos, duracaoMinima, "INMET A707 · TMC_RESUMO_DIARIO_CLIMA");
     }
 
+    /** Maior IC máximo diário válido da série; nulo se a série não estiver carregada. */
+    @Transactional(readOnly = true)
+    public BigDecimal maxHistorico() {
+        return resumos.maxIcMax(fonte, tipo, 'S');
+    }
+
     private static void validar(List<Double> acrescimos, int duracaoMinima) {
         if (duracaoMinima < 1 || duracaoMinima > 10) {
             throw new RequisicaoInvalidaException("duracaoMinima deve estar entre 1 e 10 dias");

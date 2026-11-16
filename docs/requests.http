@@ -126,3 +126,32 @@ GET {{base}}/simulacoes/modelos?acrescimos=2&duracaoMinima=5
 
 ### Acréscimo fora da faixa -> 400
 GET {{base}}/simulacoes/modelos?acrescimos=9
+
+### ---------- Simulações ----------
+
+### Criar e rodar um cenário -> 201 + Location /simulacoes/{id}
+POST {{base}}/simulacoes
+Content-Type: application/json
+
+{
+  "nome": "Março de 2024 + 3 °C, 2 agentes por UBS",
+  "modeloId": "A707-2024-03-13+3",
+  "icMaxPorDia": [38.1, 39.2, 40.4, 41.5, 43.9, 42.0, 40.8, 41.2, 40.1],
+  "dataInicio": "2026-12-01",
+  "refugios": "PUBLICOS",
+  "agentesPorUbs": 2,
+  "contatosPorAgenteDia": 15,
+  "fatorK": 0.25
+}
+
+### Resultado por dia e por setor (?dia=3 traz só os setores do dia 3)
+GET {{base}}/simulacoes/1
+
+### Simulações já feitas (paginado)
+GET {{base}}/simulacoes?page=0&size=20
+
+### Agentes zero -> 400 com o campo inválido
+POST {{base}}/simulacoes
+Content-Type: application/json
+
+{ "icMaxPorDia": [36.0, null], "agentesPorUbs": 0 }
