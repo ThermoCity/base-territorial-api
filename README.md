@@ -65,9 +65,10 @@ calor, pessoas sintéticas 60+ com consentimento, refúgios). Nada é gravado na
 1. **Nível do dia:** limiares ativos de `TMC_LIMIAR_NIVEL_CALOR` (mesma regra do modo real, com os 3 dias seguidos).
 2. **Quem entra na lista** (`buscaativa/AlcanceBuscaAtiva`, a "ação esperada" dos limiares):
    NC1–NC2 ninguém · NC3 70+ nos setores IPVS 5–6 · NC4 todos os 60+ nos setores IPVS 4–6 · NC5 todos os 60+.
-3. **Ordem da lista** (`buscaativa/RegraPrioridade`, pontos com motivos): 80+ +3 / 70–79 +2 / 60–69 +1;
-   mora sozinho +2; mobilidade reduzida +2; condição crônica +1; nota de calor 5 +2 / 4 +1;
-   IPVS 5–6 +2 / 4 +1; sem refúgio a até 800 m +1. Empate: mais velho primeiro. Pesos propostos pela equipe para o MVP.
+3. **Ordem da lista** (`buscaativa/RegraPrioridade`): a regra **v1** da API Java de cadastro, para a fila
+   simulada sair na mesma ordem do modo real: mora sozinho +3; mobilidade reduzida +2; condição crônica +2;
+   70+ anos +2; nota de calor do setor − 1 (0 a 4); IPVS 5–6 +2 / IPVS 4 +1; refúgio a mais de 800 m +1
+   (máximo 16). Empate: mais velho primeiro, depois o menor id.
 4. **Capacidade:** cada UBS contata até agentes × contatos por agente por dia, seguindo a fila. Quem sobra fica
    pendente e entra **na frente** da fila do dia seguinte (mesmo que o nível caia); ninguém aparece duas vezes.
 5. **Refúgio:** conta quem está a mais de 800 m, em linha reta, do refúgio considerado mais próximo

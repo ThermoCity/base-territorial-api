@@ -45,7 +45,7 @@ public final class MotorSimulacao {
                          boolean mobilidadeReduzida, boolean condicaoCronica, Double distanciaRefugioM) {
 
         boolean semRefugioProximo() {
-            return distanciaRefugioM == null || distanciaRefugioM > RegraPrioridade.DISTANCIA_REFUGIO_M;
+            return RegraPrioridade.semRefugioProximo(distanciaRefugioM);
         }
     }
 
@@ -73,12 +73,12 @@ public final class MotorSimulacao {
                 .map(p -> {
                     Setor s = setores.get(p.setor());
                     int pontos = RegraPrioridade.calcular(p.idade(), p.moraSozinho(), p.mobilidadeReduzida(),
-                            p.condicaoCronica(), s.ipvsGrupo(), s.notaCalor(), p.semRefugioProximo()).pontos();
+                            p.condicaoCronica(), s.ipvsGrupo(), s.notaCalor(), p.distanciaRefugioM()).pontos();
                     return new Candidato(p, pontos, s.ipvsGrupo());
                 })
                 .sorted(Comparator.comparingInt(Candidato::pontos).reversed()
                         .thenComparing(c -> c.pessoa().idade(), Comparator.reverseOrder())
-                        .thenComparingLong(c -> c.pessoa().id()))
+                        .thenComparingLong(c -> c.pessoa().id())) // desempate igual ao da API de cadastro
                 .toList();
 
         OptionalDouble media = setores.values().stream().map(Setor::lstC).filter(Objects::nonNull)
