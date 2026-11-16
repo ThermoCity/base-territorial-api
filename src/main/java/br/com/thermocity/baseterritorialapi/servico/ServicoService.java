@@ -87,6 +87,14 @@ public class ServicoService {
         return repositorio.findByTipoAndCoordStatus(TipoServico.UBS, StatusCoordenada.OK);
     }
 
+    /** Refúgios com coordenada: só os públicos confirmados ou também os potenciais (motor de simulação). */
+    @Transactional(readOnly = true)
+    public List<Servico> refugiosComCoordenada(boolean incluirPotenciais) {
+        return refugios(incluirPotenciais ? REFUGIO_COM_POTENCIAIS : REFUGIO_CONFIRMADO).stream()
+                .filter(Servico::temCoordenada)
+                .toList();
+    }
+
     private List<Servico> refugios(Set<String> revisoesAceitas) {
         return repositorio.findByTipoAndCoordStatus(TipoServico.REFUGIO, StatusCoordenada.OK).stream()
                 .filter(s -> s.getRevisao() != null && revisoesAceitas.contains(s.getRevisao()))

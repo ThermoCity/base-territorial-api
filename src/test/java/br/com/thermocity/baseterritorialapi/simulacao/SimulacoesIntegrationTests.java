@@ -4,6 +4,8 @@ import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import br.com.thermocity.baseterritorialapi.setor.SetorRepository;
+import br.com.thermocity.baseterritorialapi.sintetico.PessoaSinteticaRepository;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -19,7 +21,6 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.matchesPattern;
-import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -45,13 +46,25 @@ class SimulacoesIntegrationTests {
     @Autowired
     private SimulacaoDiaRepository dias;
 
+    @Autowired
+    private SimulacaoResultadoRepository resultados;
+
+    @Autowired
+    private PessoaSinteticaRepository pessoas;
+
+    @Autowired
+    private SetorRepository setores;
+
     private MockMvc mvc;
 
     @BeforeEach
     void preparar() {
         mvc = MockMvcBuilders.webAppContextSetup(contexto).build();
-        dias.deleteAll();
-        simulacoes.deleteAll();
+        resultados.deleteAllInBatch();
+        dias.deleteAllInBatch();
+        simulacoes.deleteAllInBatch();
+        // sem pessoas: aqui só interessa o cenário e o nível (o motor tem testes próprios)
+        pessoas.deleteAllInBatch();
         limiares.deleteAll();
         limiares.saveAll(LimiaresDeTeste.todos());
         resumos.deleteAll();
@@ -97,9 +110,9 @@ class SimulacoesIntegrationTests {
                 .andExpect(jsonPath("$.dias[2].regra").value(containsString("3 dia")))
                 .andExpect(jsonPath("$.dias[2].data").value("2026-12-03"))
                 .andExpect(jsonPath("$.dias[2].icMaxC").value(35.2))
-                // totais da busca ativa: preenchidos pelo motor dia a dia
-                .andExpect(jsonPath("$.dias[0].pessoasNaLista").value(nullValue()))
-                .andExpect(jsonPath("$.setores", hasSize(0)));
+                // sem pessoas cadastradas, a lista fica vazia; há uma linha por setor em cada dia
+                .andExpect(jsonPath("$.dias[2].pessoasNaLista").value(0))
+                .andExpect(jsonPath("$.setores", hasSize((int) setores.count() * 3)));
     }
 
     @Test

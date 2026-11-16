@@ -52,12 +52,29 @@ Testes (usam H2 em memória, não precisam do PostgreSQL): `.\gradlew.bat test`
 | GET | `/simulacoes/modelos?acrescimos=1,3&duracaoMinima=3` | gêmeo digital: ondas de calor reais da A707 (episódios de dias seguidos em NC4/NC5 em `TMC_RESUMO_DIARIO_CLIMA`, com 2 dias de entrada e 2 de saída, até 15 dias) e as mesmas ondas com acréscimo no IC; dias acima do máximo histórico vêm com `extrapolacao: true`. Cache de 1 h |
 | POST | `/simulacoes` `{ "icMaxPorDia": [...], "agentesPorUbs": 2, ... }` | cria e roda um cenário de 1 a 15 dias: grava em `TMC_SIMULACAO` / `TMC_SIMULACAO_DIA` (nunca nas tabelas reais) e devolve 201 com o id e `Location`. Opcionais: `nome`, `modeloId`, `dataInicio`, `refugios` (`TODOS`, `PUBLICOS`, `NENHUM`), `contatosPorAgenteDia` (15), `fatorK` (0,10 a 0,50, padrão 0,25 — estimativa), `distrito` |
 | GET | `/simulacoes?page=0&size=20` | simulações já feitas, das mais recentes para as mais antigas |
-| GET | `/simulacoes/{id}?dia=` | cenário, nível de cada dia (com extrapolação) e resultado por setor; 404 se não existir. Os totais da busca ativa e os setores são preenchidos pelo motor dia a dia (PBI 107) |
+| GET | `/simulacoes/{id}?dia=` | cenário e resultado de cada dia (nível, extrapolação, pessoas na lista, contatadas, pendentes, sem refúgio a até 800 m) e de cada setor (os mesmos totais + IC estimado com o fator k); 404 se não existir |
 
 Exemplos prontos em [`docs/requests.http`](docs/requests.http). Erros sempre no formato
 `{ status, erro, mensagem, detalhes[], timestamp }`.
 
 ## Regras importantes
+
+**Motor de simulação (dia a dia)** — `simulacao/MotorSimulacao`, sobre uma cópia da cidade (setores, nota de
+calor, pessoas sintéticas 60+ com consentimento, refúgios). Nada é gravado nas tabelas reais.
+
+1. **Nível do dia:** limiares ativos de `TMC_LIMIAR_NIVEL_CALOR` (mesma regra do modo real, com os 3 dias seguidos).
+2. **Quem entra na lista** (`buscaativa/AlcanceBuscaAtiva`, a "ação esperada" dos limiares):
+   NC1–NC2 ninguém · NC3 70+ nos setores IPVS 5–6 · NC4 todos os 60+ nos setores IPVS 4–6 · NC5 todos os 60+.
+3. **Ordem da lista** (`buscaativa/RegraPrioridade`, pontos com motivos): 80+ +3 / 70–79 +2 / 60–69 +1;
+   mora sozinho +2; mobilidade reduzida +2; condição crônica +1; nota de calor 5 +2 / 4 +1;
+   IPVS 5–6 +2 / 4 +1; sem refúgio a até 800 m +1. Empate: mais velho primeiro. Pesos propostos pela equipe para o MVP.
+4. **Capacidade:** cada UBS contata até agentes × contatos por agente por dia, seguindo a fila. Quem sobra fica
+   pendente e entra **na frente** da fila do dia seguinte (mesmo que o nível caia); ninguém aparece duas vezes.
+5. **Refúgio:** conta quem está a mais de 800 m, em linha reta, do refúgio considerado mais próximo
+   (`TODOS`, `PUBLICOS` ou `NENHUM` — sem refúgio, todos da lista contam).
+6. **IC estimado do setor (estimativa):** IC da cidade + k × (temperatura de superfície do setor − média dos setores).
+   A superfície (Landsat) não é a temperatura do ar; k vem do cenário (0,10 a 0,50, padrão 0,25).
+
 
 - **Refúgio "confirmado"** = revisão `manter` (equipamento público). Com `incluirPotenciais=true` entram também os
   `potencial` (templos, shoppings). `revisar` e `remover` nunca são sugeridos.

@@ -7,8 +7,7 @@ import java.util.List;
 
 /**
  * Resultado de uma simulação (GET /simulacoes/{id}): o cenário, cada dia e cada setor por dia.
- * Os totais da busca ativa e a lista de setores são preenchidos pelo motor dia a dia; até ele rodar
- * vêm nulos e vazia.
+ * Os totais da busca ativa vêm do motor dia a dia (MotorSimulacao).
  */
 public record SimulacaoDetalheResponse(Long id, String nome, StatusSimulacao status,
                                        OffsetDateTime criadoEm, OffsetDateTime concluidoEm, Cenario cenario,
@@ -24,8 +23,9 @@ public record SimulacaoDetalheResponse(Long id, String nome, StatusSimulacao sta
                       Integer semRefugio800m) {
     }
 
+    /** icEstimadoC: IC do setor estimado com o fator k (estimativa; nulo sem temperatura de superfície). */
     public record Setor(int dia, String codigoSetor, int pessoasNaLista, int contatadas, int pendentes,
-                        int semRefugio800m) {
+                        int semRefugio800m, BigDecimal icEstimadoC) {
     }
 
     static SimulacaoDetalheResponse de(Simulacao s, List<SimulacaoDia> dias, List<SimulacaoResultado> setores) {
@@ -38,6 +38,6 @@ public record SimulacaoDetalheResponse(Long id, String nome, StatusSimulacao sta
                         d.getNomeNivel(), d.getRegra(), d.getExtrapolacao() == 'S', d.getPessoasLista(),
                         d.getContatadas(), d.getPendentes(), d.getSemRefugio800m())).toList(),
                 setores.stream().map(r -> new Setor(r.getId().getDia(), r.getId().getCodigoSetor(), r.getPessoasLista(),
-                        r.getContatadas(), r.getPendentes(), r.getSemRefugio800m())).toList());
+                        r.getContatadas(), r.getPendentes(), r.getSemRefugio800m(), r.getIcEstimadoC())).toList());
     }
 }
