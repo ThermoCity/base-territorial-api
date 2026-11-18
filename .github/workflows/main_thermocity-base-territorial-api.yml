@@ -13,7 +13,7 @@ on:
   workflow_dispatch:
 
 env:
-  AZURE_WEBAPP_NAME: 'thermocity-base-territorial-api'
+  AZURE_WEBAPP_NAME: 'thermocity-base-territorial-api-v2'
 
 jobs:
   build:
